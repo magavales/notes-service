@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"todo-list/pkg/database"
@@ -22,6 +23,24 @@ func (h *Handler) createTask(ctx *gin.Context) {
 	err = db.Access.CreateTask(db.Pool, task)
 	if err != nil {
 		return
+	}
+}
+
+func (h *Handler) getTasks(ctx *gin.Context) {
+	var (
+		db    database.Database
+		tasks []model.Task
+		err   error
+	)
+
+	db.Connect()
+	tasks, err = db.Access.GetTasks(db.Pool)
+	if err != nil {
+		return
+	}
+
+	for _, value := range tasks {
+		fmt.Println("%s", value)
 	}
 }
 
