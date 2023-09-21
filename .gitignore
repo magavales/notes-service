@@ -22,5 +22,10 @@
 .idea/
 todo-list/.idea/
 
+# OS files
+.DS_Store
+.DS_Store?
+.DS_Store/
+
 # Go workspace file
 go.work
