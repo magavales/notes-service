@@ -26,6 +26,23 @@ func (da DataAccess) CreateTask(pool *pgxpool.Pool, task model.Task) error {
 	return err
 }
 
+func (da DataAccess) GetTaskByID(pool *pgxpool.Pool, id int64) (task model.Task, err error) {
+	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE id = $1", id)
+	if err != nil {
+		return model.Task{}, err
+	}
+
+	if rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			log.Println("error while iterating dataset")
+		}
+		task.ParseRowsFromTable(values)
+	}
+
+	return task, err
+}
+
 func (da DataAccess) UpdateTask(pool *pgxpool.Pool, task model.Task) error {
 	var err error
 	_, err = pool.Exec(context.Background(), "UPDATE tasks SET header = $2, description = $3, date = $4, status = $5 WHERE id = $1", task.ID, task.Header, task.Description, task.Date.Time, task.Status)
