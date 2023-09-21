@@ -25,3 +25,13 @@ func (da DataAccess) CreateTask(pool *pgxpool.Pool, task model.Task) error {
 
 	return err
 }
+
+func (da DataAccess) UpdateTask(pool *pgxpool.Pool, task model.Task) error {
+	var err error
+	_, err = pool.Exec(context.Background(), "UPDATE tasks SET header = $2, description = $3, date = $4, status = $5 WHERE id = $1", task.ID, task.Header, task.Description, task.Date.Time, task.Status)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
