@@ -14,11 +14,11 @@ func (h *Handler) InitRouter() *gin.Engine {
 		{
 			tasks := v1.Group("/tasks")
 			{
-				tasks.GET("/")                //list
-				tasks.POST("/", h.CreateTask) //create
-				tasks.GET("/:id")             //read
-				tasks.PUT("/:id")             //update
-				tasks.DELETE("/:id")          //delete
+				tasks.GET("/")                  //list
+				tasks.POST("/", h.createTask)   //create
+				tasks.GET("/:id")               //read
+				tasks.PUT("/:id", h.updateTask) //update
+				tasks.DELETE("/:id")            //delete
 			}
 		}
 	}
