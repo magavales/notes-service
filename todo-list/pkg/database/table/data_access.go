@@ -52,3 +52,12 @@ func (da DataAccess) UpdateTask(pool *pgxpool.Pool, task model.Task) error {
 
 	return err
 }
+
+func (da DataAccess) DeleteTask(pool *pgxpool.Pool, id int64) (err error) {
+	_, err = pool.Exec(context.Background(), "DELETE FROM tasks WHERE id = $1", id)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
