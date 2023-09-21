@@ -25,6 +25,22 @@ func (h *Handler) createTask(ctx *gin.Context) {
 	}
 }
 
+func (h *Handler) getTaskByID(ctx *gin.Context) {
+	var (
+		db   database.Database
+		task model.Task
+		err  error
+	)
+	id, _ := strconv.Atoi(ctx.Param("id"))
+	task.ID = int64(id)
+
+	db.Connect()
+	task, err = db.Access.GetTaskByID(db.Pool, task.ID)
+	if err != nil {
+		return
+	}
+}
+
 func (h *Handler) updateTask(ctx *gin.Context) {
 	var (
 		db   database.Database
