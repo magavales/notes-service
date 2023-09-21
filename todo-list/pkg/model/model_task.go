@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"io"
+	"time"
 )
 
 type Task struct {
@@ -18,4 +19,12 @@ func (t *Task) DecodeJSON(r io.Reader) error {
 	err := decoder.Decode(&t)
 
 	return err
+}
+
+func (t *Task) ParseRowsFromTable(values []interface{}) {
+	t.ID = values[0].(int64)
+	t.Header = values[1].(string)
+	t.Description = values[2].(string)
+	t.Date.Time = values[3].(time.Time)
+	t.Status = values[4].(string)
 }
