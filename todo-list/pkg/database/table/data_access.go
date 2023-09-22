@@ -11,17 +11,20 @@ type DataAccess struct {
 }
 
 func (da DataAccess) CreateTask(pool *pgxpool.Pool, task model.Task) error {
-	rows, err := pool.Query(context.Background(), "INSERT INTO tasks (header, description, date, status) VALUES ($1, $2, $3, $4) RETURNING id", task.Header, task.Description, task.Date, task.Status)
+	rows, err := pool.Query(context.Background(), "INSERT INTO tasks (header, description, date, status) VALUES ($1, $2, $3, $4) RETURNING id", task.Header, task.Description, task.Date.Time, task.Status)
 	if err != nil {
 		return err
 	}
 	if rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
-			log.Println("error while iterating dataset")
+			log.Printf("error while iterating dataset. Error: %s\n", err)
+			return err
 		}
 		task.ID = values[0].(int64)
 	}
+
+	log.Printf("Task has been created!")
 
 	return err
 }
@@ -33,15 +36,14 @@ func (da DataAccess) GetTasks(pool *pgxpool.Pool) (tasks []model.Task, err error
 		return tasks, err
 	}
 
-	idx := 0
 	if rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
-			log.Println("error while iterating dataset")
+			log.Printf("error while iterating dataset. Error: %s\n", err)
+			return tasks, err
 		}
 		temp.ParseRowsFromTable(values)
 		tasks = append(tasks, temp)
-		idx++
 	}
 
 	return tasks, err
@@ -56,7 +58,8 @@ func (da DataAccess) GetTaskByID(pool *pgxpool.Pool, id int64) (task model.Task,
 	if rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
-			log.Println("error while iterating dataset")
+			log.Printf("error while iterating dataset. Error: %s\n", err)
+			return task, err
 		}
 		task.ParseRowsFromTable(values)
 	}
@@ -71,6 +74,8 @@ func (da DataAccess) UpdateTask(pool *pgxpool.Pool, task model.Task) error {
 		return err
 	}
 
+	log.Printf("Task has been updated!")
+
 	return err
 }
 
@@ -79,6 +84,8 @@ func (da DataAccess) DeleteTask(pool *pgxpool.Pool, id int64) (err error) {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("ask has been deleted!")
 
 	return err
 }
