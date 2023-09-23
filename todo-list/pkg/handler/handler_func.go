@@ -63,10 +63,11 @@ func (h *Handler) createTask(ctx *gin.Context) {
 
 func (h *Handler) getTasks(ctx *gin.Context) {
 	var (
-		db    database.Database
-		tasks []model.Task
-		resp  response.Response
-		err   error
+		db          database.Database
+		tasks       []model.Task
+		resp        response.Response
+		queryParams model.QueryParams
+		err         error
 	)
 	resp.RespWriter = ctx.Writer
 
@@ -77,27 +78,81 @@ func (h *Handler) getTasks(ctx *gin.Context) {
 		return
 	}
 
-	tasks, err = db.Access.GetTasks(db.Pool)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			log.Printf("Tasks aren't in database. Error: %s\n", err)
-			resp.SetStatusNotFound()
-			return
-		} else {
-			log.Printf("The service couldn't get tasks from database. Error: %s\n", err)
+	if !ctx.Request.URL.Query().Has("status") && ctx.Request.URL.Query().Has("limit") {
+		log.Printf("Query doesn't have parameter 'status'.\n")
+		resp.SetStatusBadRequest()
+		return
+	}
+	if ctx.Request.URL.Query().Has("status") && !ctx.Request.URL.Query().Has("limit") && !ctx.Request.URL.Query().Has("offset") {
+		queryParams.ParseQueryParams(ctx.Request.URL)
+		tasks, err = db.Access.GetTasksOrderByDate(db.Pool, queryParams)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("Tasks aren't in database. Error: %s\n", err)
+				resp.SetStatusNotFound()
+				return
+			} else {
+				log.Printf("The service couldn't get tasks from database. Error: %s\n", err)
+				resp.SetStatusInternalServerError()
+				return
+			}
+		}
+
+		jdata, err := json.Marshal(tasks)
+		if err != nil {
+			log.Printf("The service couldn't encode data to JSON file. Error: %s\n", err)
 			resp.SetStatusInternalServerError()
 			return
 		}
+		resp.SetStatusOk()
+		resp.SetData(jdata)
 	}
+	if ctx.Request.URL.Query().Has("status") && ctx.Request.URL.Query().Has("limit") {
+		queryParams.ParseQueryParams(ctx.Request.URL)
+		tasks, err = db.Access.GetTasksByPages(db.Pool, queryParams)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("Tasks aren't in database. Error: %s\n", err)
+				resp.SetStatusNotFound()
+				return
+			} else {
+				log.Printf("The service couldn't get tasks from database. Error: %s\n", err)
+				resp.SetStatusInternalServerError()
+				return
+			}
+		}
 
-	jdata, err := json.Marshal(tasks)
-	if err != nil {
-		log.Printf("The service couldn't encode data to JSON file. Error: %s\n", err)
-		resp.SetStatusInternalServerError()
-		return
+		jdata, err := json.Marshal(tasks)
+		if err != nil {
+			log.Printf("The service couldn't encode data to JSON file. Error: %s\n", err)
+			resp.SetStatusInternalServerError()
+			return
+		}
+		resp.SetStatusOk()
+		resp.SetData(jdata)
+	} else {
+		tasks, err = db.Access.GetTasks(db.Pool)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.Printf("Tasks aren't in database. Error: %s\n", err)
+				resp.SetStatusNotFound()
+				return
+			} else {
+				log.Printf("The service couldn't get tasks from database. Error: %s\n", err)
+				resp.SetStatusInternalServerError()
+				return
+			}
+		}
+
+		jdata, err := json.Marshal(tasks)
+		if err != nil {
+			log.Printf("The service couldn't encode data to JSON file. Error: %s\n", err)
+			resp.SetStatusInternalServerError()
+			return
+		}
+		resp.SetStatusOk()
+		resp.SetData(jdata)
 	}
-	resp.SetStatusOk()
-	resp.SetData(jdata)
 }
 
 func (h *Handler) getTaskByID(ctx *gin.Context) {

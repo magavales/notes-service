@@ -53,6 +53,52 @@ func (da DataAccess) GetTasks(pool *pgxpool.Pool) (tasks []model.Task, err error
 	return tasks, err
 }
 
+func (da DataAccess) GetTasksByPages(pool *pgxpool.Pool, queryParams model.QueryParams) (tasks []model.Task, err error) {
+	var temp model.Task
+	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 LIMIT $2 OFFSET $3", queryParams.Status, queryParams.Limit, queryParams.Offset)
+	if err != nil {
+		return tasks, err
+	}
+
+	for rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			log.Printf("error while iterating dataset. Error: %s\n", err)
+			return tasks, err
+		}
+		temp.ParseRowsFromTable(values)
+		tasks = append(tasks, temp)
+	}
+
+	if tasks == nil {
+		return tasks, pgx.ErrNoRows
+	}
+	return tasks, err
+}
+
+func (da DataAccess) GetTasksOrderByDate(pool *pgxpool.Pool, queryParams model.QueryParams) (tasks []model.Task, err error) {
+	var temp model.Task
+	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 ORDER BY date", queryParams.Status)
+	if err != nil {
+		return tasks, err
+	}
+
+	for rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			log.Printf("error while iterating dataset. Error: %s\n", err)
+			return tasks, err
+		}
+		temp.ParseRowsFromTable(values)
+		tasks = append(tasks, temp)
+	}
+
+	if tasks == nil {
+		return tasks, pgx.ErrNoRows
+	}
+	return tasks, err
+}
+
 func (da DataAccess) GetTaskByID(pool *pgxpool.Pool, id int64) (task model.Task, err error) {
 	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE id = $1", id)
 	if err != nil {
