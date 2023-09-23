@@ -7,11 +7,11 @@ import (
 )
 
 type Task struct {
-	ID          int64      `json:"task_id"`
-	Header      string     `json:"header"`
-	Description string     `json:"description"`
-	Date        CustomTime `json:"date"`
-	Status      string     `json:"status"`
+	ID          int64      `json:"task_id,omitempty"`
+	Header      string     `json:"header,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Date        CustomTime `json:"date,omitempty"`
+	Status      string     `json:"status,omitempty"`
 }
 
 func (t *Task) DecodeJSON(r io.Reader) error {
