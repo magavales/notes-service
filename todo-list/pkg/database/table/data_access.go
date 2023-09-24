@@ -33,9 +33,9 @@ func (da DataAccess) CreateTask(pool *pgxpool.Pool, task *model.Task) error {
 	return err
 }
 
-func (da DataAccess) GetTasks(pool *pgxpool.Pool) (tasks []model.Task, err error) {
+func (da DataAccess) GetTasks(pool *pgxpool.Pool, limit, offset int) (tasks []model.Task, err error) {
 	var temp model.Task
-	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks")
+	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return tasks, err
 	}
@@ -53,9 +53,9 @@ func (da DataAccess) GetTasks(pool *pgxpool.Pool) (tasks []model.Task, err error
 	return tasks, err
 }
 
-func (da DataAccess) GetTasksByPages(pool *pgxpool.Pool, queryParams model.Pagination) (tasks []model.Task, err error) {
+func (da DataAccess) GetTasksWithStatus(pool *pgxpool.Pool, status string, limit, offset int) (tasks []model.Task, err error) {
 	var temp model.Task
-	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 LIMIT $2 OFFSET $3", queryParams.Status, queryParams.Limit, queryParams.Offset)
+	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 LIMIT $2 OFFSET $3", status, limit, offset)
 	if err != nil {
 		return tasks, err
 	}
@@ -76,9 +76,9 @@ func (da DataAccess) GetTasksByPages(pool *pgxpool.Pool, queryParams model.Pagin
 	return tasks, err
 }
 
-func (da DataAccess) GetTasksOrderByDate(pool *pgxpool.Pool, queryParams model.Pagination) (tasks []model.Task, err error) {
+func (da DataAccess) GetTasksOrderBy(pool *pgxpool.Pool, status, sort string, limit, offset int) (tasks []model.Task, err error) {
 	var temp model.Task
-	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 ORDER BY date", queryParams.Status)
+	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 ORDER BY $2 LIMIT $3 OFFSET $4", status, sort, limit, offset)
 	if err != nil {
 		return tasks, err
 	}

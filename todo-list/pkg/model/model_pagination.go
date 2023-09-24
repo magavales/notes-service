@@ -14,7 +14,7 @@ func (p *Pagination) ParseQueryParams(url *url.URL) {
 	if url.Query().Has("limit") {
 		p.Limit, _ = strconv.Atoi(url.Query().Get("limit"))
 	} else {
-		p.Limit = 10
+		p.Limit = 2
 	}
 	if url.Query().Has("offset") {
 		p.Offset, _ = strconv.Atoi(url.Query().Get("offset"))
