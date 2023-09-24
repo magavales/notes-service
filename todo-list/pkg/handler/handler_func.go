@@ -63,11 +63,13 @@ func (h *Handler) createTask(ctx *gin.Context) {
 
 func (h *Handler) getTasks(ctx *gin.Context) {
 	var (
-		db          database.Database
-		tasks       []model.Task
-		resp        response.Response
-		queryParams model.QueryParams
-		err         error
+		db              database.Database
+		tasks           []model.Task
+		resp            response.Response
+		queryStatus     model.Status
+		queryPagination model.Pagination
+		querySort       model.Sort
+		err             error
 	)
 	resp.RespWriter = ctx.Writer
 
