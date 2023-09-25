@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  todo-list:
+    build: ./
+    command: ./todo-list
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_PASSWORD=1703
+      - POSTGRES_USER=postgres
+
+  db:
+    restart: always
+    image: postgres:latest
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./schema/init_table.sql:/docker-entrypoint-initdb.d/init_table.sql
+    environment:
+      - POSTGRES_PASSWORD=1703
+      - POSTGRES_USER=postgres
+    ports:
+      - 5432:5432
