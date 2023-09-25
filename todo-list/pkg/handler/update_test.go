@@ -14,10 +14,10 @@ import (
 	"todo-list/pkg/model"
 )
 
-func TestCreate1(t *testing.T) {
+func TestUpdate1(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	customTime := new(model.CustomTime)
-	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-27 16:00:00")
+	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-28 16:00:00")
 	handler := new(Handler)
 
 	handler.Config = database.Config{
@@ -31,7 +31,7 @@ func TestCreate1(t *testing.T) {
 
 	reqData := model.Task{
 		Header:      "Погулять в парке Коломенское",
-		Description: "сегодня",
+		Description: "завтра",
 		Date:        *customTime,
 		Status:      "uncompleted",
 	}
@@ -43,9 +43,9 @@ func TestCreate1(t *testing.T) {
 	}
 
 	router := gin.Default()
-	router.POST("/api/v1/tasks", handler.createTask)
+	router.PUT("/api/v1/tasks/:id", handler.updateTaskByID)
 
-	req, err := http.NewRequest(http.MethodPost, "/api/v1/tasks", bytes.NewReader(jdata))
+	req, err := http.NewRequest(http.MethodPut, "/api/v1/tasks/1", bytes.NewReader(jdata))
 	if err != nil {
 		t.Fatalf("Couldn't create request: %v\n", err)
 	}
@@ -54,10 +54,10 @@ func TestCreate1(t *testing.T) {
 
 	router.ServeHTTP(resp, req)
 
-	assert.Equal(t, 200, resp.Code, "#1 Test for creating is completed!")
+	assert.Equal(t, 200, resp.Code, "#1 Test for updating is completed!")
 }
 
-func TestCreate2(t *testing.T) {
+func TestUpdate2(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	customTime := new(model.CustomTime)
 	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-23 10:32:56")
@@ -86,9 +86,9 @@ func TestCreate2(t *testing.T) {
 	}
 
 	router := gin.Default()
-	router.POST("/api/v1/tasks", handler.createTask)
+	router.PUT("/api/v1/tasks/:id", handler.updateTaskByID)
 
-	req, err := http.NewRequest(http.MethodPost, "/api/v1/tasks", bytes.NewReader(jdata))
+	req, err := http.NewRequest(http.MethodPut, "/api/v1/tasks/2", bytes.NewReader(jdata))
 	if err != nil {
 		t.Fatalf("Couldn't create request: %v\n", err)
 	}
@@ -97,10 +97,10 @@ func TestCreate2(t *testing.T) {
 
 	router.ServeHTTP(resp, req)
 
-	assert.Equal(t, 200, resp.Code, "#2 Test for creating is completed!")
+	assert.Equal(t, 200, resp.Code, "#2 Test for updating is completed!")
 }
 
-func TestCreate3(t *testing.T) {
+func TestUpdate3(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	customTime := new(model.CustomTime)
 	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-27 21:43:14")
@@ -119,7 +119,7 @@ func TestCreate3(t *testing.T) {
 		Header:      "Погладить кота",
 		Description: "сегодня",
 		Date:        *customTime,
-		Status:      "uncompleted",
+		Status:      "completed",
 	}
 
 	jdata, err := json.Marshal(reqData)
@@ -129,9 +129,9 @@ func TestCreate3(t *testing.T) {
 	}
 
 	router := gin.Default()
-	router.POST("/api/v1/tasks", handler.createTask)
+	router.PUT("/api/v1/tasks/:id", handler.updateTaskByID)
 
-	req, err := http.NewRequest(http.MethodPost, "/api/v1/tasks", bytes.NewReader(jdata))
+	req, err := http.NewRequest(http.MethodPut, "/api/v1/tasks/3", bytes.NewReader(jdata))
 	if err != nil {
 		t.Fatalf("Couldn't create request: %v\n", err)
 	}
@@ -140,13 +140,13 @@ func TestCreate3(t *testing.T) {
 
 	router.ServeHTTP(resp, req)
 
-	assert.Equal(t, 200, resp.Code, "#3 Test for creating is completed!")
+	assert.Equal(t, 200, resp.Code, "#1 Test for updating is completed!")
 }
 
-func TestCreate4(t *testing.T) {
+func TestUpdate4(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	customTime := new(model.CustomTime)
-	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-25 22:38:20")
+	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-26 22:38:20")
 	handler := new(Handler)
 
 	handler.Config = database.Config{
@@ -160,9 +160,9 @@ func TestCreate4(t *testing.T) {
 
 	reqData := model.Task{
 		Header:      "Купить чипсы",
-		Description: "очень выкусные",
+		Description: "завтра",
 		Date:        *customTime,
-		Status:      "completed",
+		Status:      "uncompleted",
 	}
 
 	jdata, err := json.Marshal(reqData)
@@ -172,9 +172,9 @@ func TestCreate4(t *testing.T) {
 	}
 
 	router := gin.Default()
-	router.POST("/api/v1/tasks", handler.createTask)
+	router.PUT("/api/v1/tasks/:id", handler.updateTaskByID)
 
-	req, err := http.NewRequest(http.MethodPost, "/api/v1/tasks", bytes.NewReader(jdata))
+	req, err := http.NewRequest(http.MethodPut, "/api/v1/tasks/4", bytes.NewReader(jdata))
 	if err != nil {
 		t.Fatalf("Couldn't create request: %v\n", err)
 	}
@@ -183,5 +183,5 @@ func TestCreate4(t *testing.T) {
 
 	router.ServeHTTP(resp, req)
 
-	assert.Equal(t, 200, resp.Code, "#4 Test for creating is completed!")
+	assert.Equal(t, 200, resp.Code, "#4 Test for updating is completed!")
 }
