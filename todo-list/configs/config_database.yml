@@ -1,6 +1,0 @@
-user: "postgres"
-password: "1703"
-host: "localhost"
-port: "5432"
-dbname: "postgres"
-conns: "10"
