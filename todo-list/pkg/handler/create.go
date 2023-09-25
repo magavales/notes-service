@@ -33,7 +33,7 @@ func (h *Handler) createTask(ctx *gin.Context) {
 		}
 	}
 
-	err = db.Connect()
+	err = db.Connect(h.Config)
 	if err != nil {
 		log.Printf("Service can't connect to database: %s\n", err)
 		resp.SetStatusInternalServerError()

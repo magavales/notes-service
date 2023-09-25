@@ -23,7 +23,7 @@ func (h *Handler) getTasks(ctx *gin.Context) {
 	)
 	resp.RespWriter = ctx.Writer
 
-	err = db.Connect()
+	err = db.Connect(h.Config)
 	if err != nil {
 		log.Printf("Service can't connect to database: %s\n", err)
 		resp.SetStatusInternalServerError()

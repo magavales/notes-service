@@ -18,10 +18,9 @@ func (h *Handler) updateTaskByID(ctx *gin.Context) {
 		resp        response.Response
 		err         error
 		syntaxError *json.SyntaxError
-		updateError error
 	)
 	resp.RespWriter = ctx.Writer
-	updateError = errors.New("table don't have needed row")
+	var updateError any = errors.New("table don't have needed row")
 
 	err = task.DecodeJSON(ctx.Request.Body)
 	if err != nil {
@@ -39,7 +38,7 @@ func (h *Handler) updateTaskByID(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	task.ID = int64(id)
 
-	err = db.Connect()
+	err = db.Connect(h.Config)
 	if err != nil {
 		log.Printf("Service can't connect to database: %s\n", err)
 		resp.SetStatusInternalServerError()

@@ -12,19 +12,18 @@ import (
 
 func (h *Handler) deleteTaskByID(ctx *gin.Context) {
 	var (
-		db          database.Database
-		task        model.Task
-		resp        response.Response
-		err         error
-		deleteError error
+		db   database.Database
+		task model.Task
+		resp response.Response
+		err  error
 	)
 	resp.RespWriter = ctx.Writer
-	deleteError = errors.New("table don't have needed row")
+	var deleteError any = errors.New("table don't have needed row")
 
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	task.ID = int64(id)
 
-	err = db.Connect()
+	err = db.Connect(h.Config)
 	if err != nil {
 		log.Printf("Service can't connect to database: %s\n", err)
 		resp.SetStatusInternalServerError()

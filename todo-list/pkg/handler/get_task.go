@@ -24,7 +24,7 @@ func (h *Handler) getTaskByID(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	task.ID = int64(id)
 
-	err = db.Connect()
+	err = db.Connect(h.Config)
 	if err != nil {
 		log.Printf("Service can't connect to database: %s\n", err)
 		resp.SetStatusInternalServerError()
