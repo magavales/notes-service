@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -17,4 +18,8 @@ func (ct *CustomTime) UnmarshalJSON(b []byte) (err error) {
 	}
 	ct.Time, err = time.Parse("2006-01-02 15:04:05", str)
 	return err
+}
+
+func (ct CustomTime) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"%s"`, ct.Time.Format("2006-01-02 15:04:05"))), nil
 }
