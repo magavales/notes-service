@@ -1,8 +1,12 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"todo-list/pkg/database"
+)
 
 type Handler struct {
+	Config database.Config
 }
 
 func (h *Handler) InitRouter() *gin.Engine {
