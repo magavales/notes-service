@@ -12,6 +12,20 @@ make test
 
 make swag
 
+## Формат JSON файла
+
+{
+
+  "header": "Тестовое задание",
+
+  "description": "проверить",
+
+  "date": "2023-09-27 12:00:00",
+
+  "status": "uncompleted"
+
+}
+
 ## Входные данные
 
 1. create - JSON файл с данными.
