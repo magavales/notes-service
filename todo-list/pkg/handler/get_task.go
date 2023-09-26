@@ -50,7 +50,7 @@ func (h *Handler) getTaskByID(ctx *gin.Context) {
 			resp.SetStatusNotFound()
 			return
 		} else {
-			log.Printf("The service couldn't get task from database with id = %d. Error: %s\n", task.ID, err)
+			log.Printf("The service couldn't get task from database with id = %d. Error: %s\n", id, err)
 			resp.SetStatusInternalServerError()
 			return
 		}

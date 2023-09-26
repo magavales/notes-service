@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/spf13/viper"
 	"log"
+	"os"
 	"todo-list/pkg/database"
 	"todo-list/pkg/handler"
 	"todo-list/pkg/server"
@@ -29,6 +30,10 @@ func main() {
 		Name:     viper.GetString("db.dbname"),
 		Conns:    viper.GetString("db.conns"),
 	}
+	if len(os.Args) == 2 {
+		h.Config.Host = os.Args[1]
+	}
+
 	router := h.InitRouter()
 
 	serv := new(server.Server)

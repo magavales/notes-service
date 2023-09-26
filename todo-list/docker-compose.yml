@@ -3,7 +3,7 @@ version: '3.8'
 services:
   todo-list:
     build: ./
-    command: ./todo-list
+    command: ./todo-list db
     ports:
       - 8080:8080
     depends_on:
@@ -14,7 +14,7 @@ services:
 
   db:
     restart: always
-    image: postgres:latest
+    image: postgres:15.4-bullseye
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
       - ./schema/init_table.sql:/docker-entrypoint-initdb.d/init_table.sql
