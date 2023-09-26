@@ -1,255 +1,233 @@
 package handler
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 	"todo-list/pkg/database"
+	mock_database "todo-list/pkg/database/mocks"
 	"todo-list/pkg/model"
 )
 
-func TestGetDefaultTasks(t *testing.T) {
-	var (
-		expectedData []model.Task
-		responseData []model.Task
-	)
+func TestHandler_getTasks1(t *testing.T) {
+	type mockBehaviour func(s *mock_database.MockAccess, limit, offset int)
+
+	temp := new(model.Pagination)
+	temp.Limit = 2
+	temp.Offset = 0
 	customTime := new(model.CustomTime)
-	customTime1 := new(model.CustomTime)
 	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-27 16:00:00")
-	customTime1.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-23 10:32:56")
-	expectedData = []model.Task{
+	customTime1 := new(model.CustomTime)
+	customTime1.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-25 18:00:00")
+
+	testTable := []struct {
+		name                string
+		inputPagination     model.Pagination
+		mockBehaviour       mockBehaviour
+		expectedStatusCode  int
+		expectedRequestBody string
+	}{
 		{
-			ID:          1,
-			Header:      "Погулять в парке Коломенское",
-			Description: "сегодня",
-			Date:        *customTime,
-			Status:      "uncompleted",
+			name:            "OK",
+			inputPagination: *temp,
+			mockBehaviour: func(s *mock_database.MockAccess, limit, offset int) {
+				s.EXPECT().GetTasks(limit, offset).Return([]model.Task{
+					{
+						ID:          int64(1),
+						Header:      "Погулять в парке Коломенское",
+						Description: "сегодня",
+						Date:        *customTime,
+						Status:      "uncompleted",
+					},
+					{
+						ID:          int64(2),
+						Header:      "Погладить кота",
+						Description: "сейчас",
+						Date:        *customTime1,
+						Status:      "uncompleted",
+					},
+				}, nil)
+			},
+			expectedStatusCode:  200,
+			expectedRequestBody: `[{"task_id":1,"header":"Погулять в парке Коломенское","description":"сегодня","date":"2023-09-27 16:00:00","status":"uncompleted"},{"task_id":2,"header":"Погладить кота","description":"сейчас","date":"2023-09-25 18:00:00","status":"uncompleted"}]`,
 		},
-		{
-			ID:          2,
-			Header:      "Сделать домашнее задание",
-			Description: "математика, физика",
-			Date:        *customTime1,
-			Status:      "completed",
-		},
-	}
-	gin.SetMode(gin.TestMode)
-	handler := new(Handler)
-
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
 	}
 
-	router := gin.Default()
-	router.GET("/api/v1/tasks", handler.getTasks)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
 
-	req, err := http.NewRequest(http.MethodGet, "/api/v1/tasks", nil)
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
+			newMockAccess := mock_database.NewMockAccess(c)
+			testCase.mockBehaviour(newMockAccess, testCase.inputPagination.Limit, testCase.inputPagination.Offset)
+
+			access := &database.Database{Access: newMockAccess}
+			handler := NewHandler(access)
+
+			router := gin.Default()
+			router.GET("/api/v1/tasks", handler.getTasks)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/tasks?limit=2&offset=0", nil)
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+
+			assert.Equal(t, testCase.expectedStatusCode, resp.Code)
+			assert.Equal(t, testCase.expectedRequestBody, resp.Body.String())
+		})
 	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-	err = json.Unmarshal(resp.Body.Bytes(), &responseData)
-	if err != nil {
-		log.Fatalf("Can't unmarshal response. Error: %s", err)
-		return
-	}
-
-	assert.Equal(t, 200, resp.Code, "Test for default get tasks function\nStatus code is right.")
-	assert.Equal(t, expectedData, responseData, "Expected data equals response date.")
 }
 
-func TestGetTasksWithOffsetAndLimit(t *testing.T) {
-	var (
-		expectedData []model.Task
-		responseData []model.Task
-	)
+func TestHandler_getTasks2(t *testing.T) {
+	type mockBehaviour func(s *mock_database.MockAccess, status string, limit, offset int)
+
+	temp := new(model.Pagination)
+	temp.Limit = 2
+	temp.Offset = 0
 	customTime := new(model.CustomTime)
-	customTime1 := new(model.CustomTime)
-	customTime2 := new(model.CustomTime)
-	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-23 10:32:56")
-	customTime1.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-27 21:43:14")
-	customTime2.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-25 22:38:20")
-	expectedData = []model.Task{
-		{
-			ID:          2,
-			Header:      "Сделать домашнее задание",
-			Description: "математика, физика",
-			Date:        *customTime,
-			Status:      "completed",
-		},
-		{
-			ID:          3,
-			Header:      "Погладить кота",
-			Description: "сегодня",
-			Date:        *customTime1,
-			Status:      "uncompleted",
-		},
-		{
-			ID:          4,
-			Header:      "Купить чипсы",
-			Description: "очень выкусные",
-			Date:        *customTime2,
-			Status:      "completed",
-		},
-	}
-	gin.SetMode(gin.TestMode)
-	handler := new(Handler)
-
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
-	}
-
-	router := gin.Default()
-	router.GET("/api/v1/tasks", handler.getTasks)
-
-	req, err := http.NewRequest(http.MethodGet, "/api/v1/tasks?limit=3&offset=1", nil)
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-	err = json.Unmarshal(resp.Body.Bytes(), &responseData)
-	if err != nil {
-		log.Fatalf("Can't unmarshal response. Error: %s", err)
-		return
-	}
-
-	assert.Equal(t, 200, resp.Code, "Test for get tasks function with pagination\nStatus code is right.")
-	assert.Equal(t, expectedData, responseData, "Expected data equals response date.")
-}
-
-func TestGetTasksWithStatus(t *testing.T) {
-	var (
-		expectedData []model.Task
-		responseData []model.Task
-	)
-	customTime := new(model.CustomTime)
-	customTime1 := new(model.CustomTime)
-	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-23 10:32:56")
-	customTime1.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-25 22:38:20")
-	expectedData = []model.Task{
-		{
-			ID:          2,
-			Header:      "Сделать домашнее задание",
-			Description: "математика, физика",
-			Date:        *customTime,
-			Status:      "completed",
-		},
-		{
-			ID:          4,
-			Header:      "Купить чипсы",
-			Description: "очень выкусные",
-			Date:        *customTime1,
-			Status:      "completed",
-		},
-	}
-	gin.SetMode(gin.TestMode)
-	handler := new(Handler)
-
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
-	}
-
-	router := gin.Default()
-	router.GET("/api/v1/tasks", handler.getTasks)
-
-	req, err := http.NewRequest(http.MethodGet, "/api/v1/tasks?status=completed", nil)
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-	err = json.Unmarshal(resp.Body.Bytes(), &responseData)
-	if err != nil {
-		log.Fatalf("Can't unmarshal response. Error: %s", err)
-		return
-	}
-
-	assert.Equal(t, 200, resp.Code, "#1 Test for get all tasks function\nStatus code is right.")
-	assert.Equal(t, expectedData, responseData, "Expected data equals response date.")
-}
-
-func TestGetTasksOrderByStatus(t *testing.T) {
-	var (
-		expectedData []model.Task
-		responseData []model.Task
-	)
-	customTime := new(model.CustomTime)
-	customTime1 := new(model.CustomTime)
 	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-27 16:00:00")
-	customTime1.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-27 21:43:14")
-	expectedData = []model.Task{
+	customTime1 := new(model.CustomTime)
+	customTime1.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-25 18:00:00")
+	status := new(model.Status)
+	status.Status = "uncompleted"
+
+	testTable := []struct {
+		name                string
+		inputPagination     model.Pagination
+		inputStatus         model.Status
+		mockBehaviour       mockBehaviour
+		expectedStatusCode  int
+		expectedRequestBody string
+	}{
 		{
-			ID:          1,
-			Header:      "Погулять в парке Коломенское",
-			Description: "сегодня",
-			Date:        *customTime,
-			Status:      "uncompleted",
+			name:            "OK",
+			inputPagination: *temp,
+			inputStatus:     *status,
+			mockBehaviour: func(s *mock_database.MockAccess, status string, limit, offset int) {
+				s.EXPECT().GetTasksWithStatus(status, limit, offset).Return([]model.Task{
+					{
+						ID:          int64(1),
+						Header:      "Погулять в парке Коломенское",
+						Description: "сегодня",
+						Date:        *customTime,
+						Status:      "uncompleted",
+					},
+					{
+						ID:          int64(2),
+						Header:      "Погладить кота",
+						Description: "сейчас",
+						Date:        *customTime1,
+						Status:      "uncompleted",
+					},
+				}, nil)
+			},
+			expectedStatusCode:  200,
+			expectedRequestBody: `[{"task_id":1,"header":"Погулять в парке Коломенское","description":"сегодня","date":"2023-09-27 16:00:00","status":"uncompleted"},{"task_id":2,"header":"Погладить кота","description":"сейчас","date":"2023-09-25 18:00:00","status":"uncompleted"}]`,
 		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
+
+			newMockAccess := mock_database.NewMockAccess(c)
+			testCase.mockBehaviour(newMockAccess, testCase.inputStatus.Status, testCase.inputPagination.Limit, testCase.inputPagination.Offset)
+
+			access := &database.Database{Access: newMockAccess}
+			handler := NewHandler(access)
+
+			router := gin.Default()
+			router.GET("/api/v1/tasks", handler.getTasks)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/tasks?status=uncompleted&limit=2&offset=0", nil)
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+
+			assert.Equal(t, testCase.expectedStatusCode, resp.Code)
+			assert.Equal(t, testCase.expectedRequestBody, resp.Body.String())
+		})
+	}
+}
+
+func TestHandler_getTasks3(t *testing.T) {
+	type mockBehaviour func(s *mock_database.MockAccess, status, sort string, limit, offset int)
+
+	temp := new(model.Pagination)
+	temp.Limit = 2
+	temp.Offset = 0
+	customTime := new(model.CustomTime)
+	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-27 16:00:00")
+	customTime1 := new(model.CustomTime)
+	customTime1.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-25 18:00:00")
+	status := new(model.Status)
+	status.Status = "uncompleted"
+	sort := new(model.Sort)
+	sort.Sort = "date"
+
+	testTable := []struct {
+		name                string
+		inputPagination     model.Pagination
+		inputStatus         model.Status
+		inputSort           model.Sort
+		mockBehaviour       mockBehaviour
+		expectedStatusCode  int
+		expectedRequestBody string
+	}{
 		{
-			ID:          3,
-			Header:      "Погладить кота",
-			Description: "сегодня",
-			Date:        *customTime1,
-			Status:      "uncompleted",
+			name:            "OK",
+			inputPagination: *temp,
+			inputStatus:     *status,
+			inputSort:       *sort,
+			mockBehaviour: func(s *mock_database.MockAccess, status, sort string, limit, offset int) {
+				s.EXPECT().GetTasksOrderBy(status, sort, limit, offset).Return([]model.Task{
+					{
+						ID:          int64(2),
+						Header:      "Погладить кота",
+						Description: "сейчас",
+						Date:        *customTime1,
+						Status:      "uncompleted",
+					},
+					{
+						ID:          int64(1),
+						Header:      "Погулять в парке Коломенское",
+						Description: "сегодня",
+						Date:        *customTime,
+						Status:      "uncompleted",
+					},
+				}, nil)
+			},
+			expectedStatusCode:  200,
+			expectedRequestBody: `[{"task_id":2,"header":"Погладить кота","description":"сейчас","date":"2023-09-25 18:00:00","status":"uncompleted"},{"task_id":1,"header":"Погулять в парке Коломенское","description":"сегодня","date":"2023-09-27 16:00:00","status":"uncompleted"}]`,
 		},
 	}
-	gin.SetMode(gin.TestMode)
-	handler := new(Handler)
 
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
+
+			newMockAccess := mock_database.NewMockAccess(c)
+			testCase.mockBehaviour(newMockAccess, testCase.inputStatus.Status, testCase.inputSort.Sort, testCase.inputPagination.Limit, testCase.inputPagination.Offset)
+
+			access := &database.Database{Access: newMockAccess}
+			handler := NewHandler(access)
+
+			router := gin.Default()
+			router.GET("/api/v1/tasks", handler.getTasks)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/tasks?status=uncompleted&sort=date&limit=2&offset=0", nil)
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+
+			assert.Equal(t, testCase.expectedStatusCode, resp.Code)
+			assert.Equal(t, testCase.expectedRequestBody, resp.Body.String())
+		})
 	}
-
-	router := gin.Default()
-	router.GET("/api/v1/tasks", handler.getTasks)
-
-	req, err := http.NewRequest(http.MethodGet, "/api/v1/tasks?status=uncompleted&sort=date", nil)
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-	err = json.Unmarshal(resp.Body.Bytes(), &responseData)
-	if err != nil {
-		log.Fatalf("Can't unmarshal response. Error: %s", err)
-		return
-	}
-
-	assert.Equal(t, 200, resp.Code, "#1 Test for get all tasks function\nStatus code is right.")
-	assert.Equal(t, expectedData, responseData, "Expected data equals response date.")
 }
