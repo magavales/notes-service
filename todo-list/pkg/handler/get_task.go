@@ -7,7 +7,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"log"
 	"strconv"
-	"todo-list/pkg/database"
 	"todo-list/pkg/model"
 	"todo-list/pkg/response"
 )
@@ -25,7 +24,6 @@ import (
 // @Router       /api/v1/tasks/:id 	[get]
 func (h *Handler) getTaskByID(ctx *gin.Context) {
 	var (
-		db   database.Database
 		task model.Task
 		id   model.TaskID
 		resp response.Response
@@ -36,14 +34,7 @@ func (h *Handler) getTaskByID(ctx *gin.Context) {
 	temp, _ := strconv.Atoi(ctx.Param("id"))
 	id.ID = int64(temp)
 
-	err = db.Connect(h.Config)
-	if err != nil {
-		log.Printf("Service can't connect to database: %s\n", err)
-		resp.SetStatusInternalServerError()
-		return
-	}
-
-	task, err = db.Access.GetTaskByID(db.Pool, id.ID)
+	task, err = h.db.Access.GetTaskByID(id.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			log.Printf("Task with id = %d isn't in database. Error: %s\n", id, err)

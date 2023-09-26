@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"log"
-	"todo-list/pkg/database"
 	"todo-list/pkg/model"
 	"todo-list/pkg/response"
 )
@@ -24,7 +23,6 @@ import (
 // @Router       /api/v1/tasks/:id 	[post]
 func (h *Handler) createTask(ctx *gin.Context) {
 	var (
-		db          database.Database
 		task        model.TaskReq
 		id          model.TaskID
 		resp        response.Response
@@ -46,14 +44,7 @@ func (h *Handler) createTask(ctx *gin.Context) {
 		}
 	}
 
-	err = db.Connect(h.Config)
-	if err != nil {
-		log.Printf("Service can't connect to database: %s\n", err)
-		resp.SetStatusInternalServerError()
-		return
-	}
-
-	id.ID, err = db.Access.CreateTask(db.Pool, &task)
+	id.ID, err = h.db.Access.CreateTask(task)
 	if err != nil {
 		log.Printf("The service couldn't create task in database. Error: %s\n", err)
 		resp.SetStatusInternalServerError()

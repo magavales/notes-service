@@ -9,7 +9,11 @@ import (
 )
 
 type Handler struct {
-	Config database.Config
+	db *database.Database
+}
+
+func NewHandler(db *database.Database) *Handler {
+	return &Handler{db: db}
 }
 
 func (h *Handler) InitRouter() *gin.Engine {

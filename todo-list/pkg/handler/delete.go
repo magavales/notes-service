@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"strconv"
-	"todo-list/pkg/database"
 	"todo-list/pkg/model"
 	"todo-list/pkg/response"
 )
@@ -22,7 +21,6 @@ import (
 // @Router       /api/v1/tasks/:id 	[delete]
 func (h *Handler) deleteTaskByID(ctx *gin.Context) {
 	var (
-		db   database.Database
 		id   model.TaskID
 		task model.Task
 		resp response.Response
@@ -34,14 +32,7 @@ func (h *Handler) deleteTaskByID(ctx *gin.Context) {
 	temp, _ := strconv.Atoi(ctx.Param("id"))
 	id.ID = int64(temp)
 
-	err = db.Connect(h.Config)
-	if err != nil {
-		log.Printf("Service can't connect to database: %s\n", err)
-		resp.SetStatusInternalServerError()
-		return
-	}
-
-	err = db.Access.DeleteTask(db.Pool, id.ID)
+	err = h.db.Access.DeleteTask(id.ID)
 	if err != nil {
 		if errors.As(err, &deleteError) {
 			log.Printf("Task with id = %d isn't in database. Error: %s\n", task.ID, err)

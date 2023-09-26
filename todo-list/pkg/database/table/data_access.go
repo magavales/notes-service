@@ -10,11 +10,16 @@ import (
 )
 
 type DataAccess struct {
+	Pool *pgxpool.Pool
 }
 
-func (da DataAccess) CreateTask(pool *pgxpool.Pool, task *model.TaskReq) (int64, error) {
+func NewAccess(pool *pgxpool.Pool) *DataAccess {
+	return &DataAccess{Pool: pool}
+}
+
+func (da DataAccess) CreateTask(task model.TaskReq) (int64, error) {
 	var id int64
-	rows, err := pool.Query(context.Background(), "INSERT INTO tasks (header, description, date, status) VALUES ($1, $2, $3, $4) RETURNING id", task.Header, task.Description, task.Date.Time, task.Status)
+	rows, err := da.Pool.Query(context.Background(), "INSERT INTO tasks (header, description, date, status) VALUES ($1, $2, $3, $4) RETURNING id", task.Header, task.Description, task.Date.Time, task.Status)
 	if err != nil {
 		return 0, err
 	}
@@ -34,9 +39,9 @@ func (da DataAccess) CreateTask(pool *pgxpool.Pool, task *model.TaskReq) (int64,
 	return id, err
 }
 
-func (da DataAccess) GetTasks(pool *pgxpool.Pool, limit, offset int) (tasks []model.Task, err error) {
+func (da DataAccess) GetTasks(limit, offset int) (tasks []model.Task, err error) {
 	var temp model.Task
-	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks LIMIT $1 OFFSET $2", limit, offset)
+	rows, err := da.Pool.Query(context.Background(), "SELECT * FROM tasks LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return tasks, err
 	}
@@ -54,32 +59,9 @@ func (da DataAccess) GetTasks(pool *pgxpool.Pool, limit, offset int) (tasks []mo
 	return tasks, err
 }
 
-func (da DataAccess) GetTasksWithStatus(pool *pgxpool.Pool, status string, limit, offset int) (tasks []model.Task, err error) {
+func (da DataAccess) GetTasksWithStatus(status string, limit, offset int) (tasks []model.Task, err error) {
 	var temp model.Task
-	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 LIMIT $2 OFFSET $3", status, limit, offset)
-	if err != nil {
-		return tasks, err
-	}
-
-	for rows.Next() {
-		values, err := rows.Values()
-		if err != nil {
-			log.Printf("error while iterating dataset. Error: %s\n", err)
-			return tasks, err
-		}
-		temp.ParseRowsFromTable(values)
-		tasks = append(tasks, temp)
-	}
-
-	if tasks == nil {
-		return tasks, pgx.ErrNoRows
-	}
-	return tasks, err
-}
-
-func (da DataAccess) GetTasksOrderBy(pool *pgxpool.Pool, status, sort string, limit, offset int) (tasks []model.Task, err error) {
-	var temp model.Task
-	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 ORDER BY $2 LIMIT $3 OFFSET $4", status, sort, limit, offset)
+	rows, err := da.Pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 LIMIT $2 OFFSET $3", status, limit, offset)
 	if err != nil {
 		return tasks, err
 	}
@@ -100,8 +82,31 @@ func (da DataAccess) GetTasksOrderBy(pool *pgxpool.Pool, status, sort string, li
 	return tasks, err
 }
 
-func (da DataAccess) GetTaskByID(pool *pgxpool.Pool, id int64) (task model.Task, err error) {
-	rows, err := pool.Query(context.Background(), "SELECT * FROM tasks WHERE id = $1", id)
+func (da DataAccess) GetTasksOrderBy(status, sort string, limit, offset int) (tasks []model.Task, err error) {
+	var temp model.Task
+	rows, err := da.Pool.Query(context.Background(), "SELECT * FROM tasks WHERE status = $1 ORDER BY $2 LIMIT $3 OFFSET $4", status, sort, limit, offset)
+	if err != nil {
+		return tasks, err
+	}
+
+	for rows.Next() {
+		values, err := rows.Values()
+		if err != nil {
+			log.Printf("error while iterating dataset. Error: %s\n", err)
+			return tasks, err
+		}
+		temp.ParseRowsFromTable(values)
+		tasks = append(tasks, temp)
+	}
+
+	if tasks == nil {
+		return tasks, pgx.ErrNoRows
+	}
+	return tasks, err
+}
+
+func (da DataAccess) GetTaskByID(id int64) (task model.Task, err error) {
+	rows, err := da.Pool.Query(context.Background(), "SELECT * FROM tasks WHERE id = $1", id)
 	if err != nil {
 		return model.Task{}, err
 	}
@@ -120,8 +125,8 @@ func (da DataAccess) GetTaskByID(pool *pgxpool.Pool, id int64) (task model.Task,
 	return task, err
 }
 
-func (da DataAccess) UpdateTask(pool *pgxpool.Pool, id int64, task model.TaskReq) error {
-	tag, err := pool.Exec(context.Background(), "UPDATE tasks SET header = $2, description = $3, date = $4, status = $5 WHERE id = $1", id, task.Header, task.Description, task.Date.Time, task.Status)
+func (da DataAccess) UpdateTask(id int64, task model.TaskReq) error {
+	tag, err := da.Pool.Exec(context.Background(), "UPDATE tasks SET header = $2, description = $3, date = $4, status = $5 WHERE id = $1", id, task.Header, task.Description, task.Date.Time, task.Status)
 	if err != nil {
 		return err
 	}
@@ -135,8 +140,8 @@ func (da DataAccess) UpdateTask(pool *pgxpool.Pool, id int64, task model.TaskReq
 	return err
 }
 
-func (da DataAccess) DeleteTask(pool *pgxpool.Pool, id int64) error {
-	tag, err := pool.Exec(context.Background(), "DELETE FROM tasks WHERE id = $1", id)
+func (da DataAccess) DeleteTask(id int64) error {
+	tag, err := da.Pool.Exec(context.Background(), "DELETE FROM tasks WHERE id = $1", id)
 	if err != nil {
 		return err
 	}
