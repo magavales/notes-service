@@ -1,0 +1,203 @@
+basePath: /
+definitions:
+  todo-list_pkg_model.CustomTime:
+    properties:
+      time.Time:
+        type: string
+    type: object
+  todo-list_pkg_model.Task:
+    properties:
+      date:
+        $ref: '#/definitions/todo-list_pkg_model.CustomTime'
+      description:
+        type: string
+      header:
+        type: string
+      status:
+        type: string
+      task_id:
+        type: integer
+    type: object
+  todo-list_pkg_model.TaskID:
+    properties:
+      task_id:
+        type: integer
+    type: object
+  todo-list_pkg_response.Response:
+    properties:
+      respWriter: {}
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API server for TodoList Application
+  title: Todo List API
+  version: v1.0.0
+paths:
+  /api/v1/tasks:
+    get:
+      consumes:
+      - application/json
+      description: update task
+      parameters:
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: offset
+        type: integer
+      - in: query
+        name: status
+        type: string
+      - in: query
+        name: sort
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/todo-list_pkg_model.Task'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+      summary: Update task
+      tags:
+      - update
+  /api/v1/tasks/:id:
+    delete:
+      consumes:
+      - application/json
+      description: delete task
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+      summary: Delete task
+      tags:
+      - delete
+    get:
+      consumes:
+      - application/json
+      description: get task
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/todo-list_pkg_model.Task'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+      summary: Get task
+      tags:
+      - get
+    post:
+      consumes:
+      - application/json
+      description: create task
+      parameters:
+      - description: Data for creating task
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/todo-list_pkg_model.Task'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/todo-list_pkg_model.TaskID'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+      summary: Create task
+      tags:
+      - create
+    put:
+      consumes:
+      - application/json
+      description: update task
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/todo-list_pkg_response.Response'
+      summary: Update task
+      tags:
+      - update
+swagger: "2.0"

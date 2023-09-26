@@ -15,9 +15,9 @@ import (
 // @Description  update task
 // @Tags         update
 // @Accept       json
-// @Param        queryPagination   	path      	model.Pagination  	true  "Pagination"
-// @Param        queryStatus   		path      	model.Status  		true  "Status"
-// @Param        querySort   		path      	model.Sort  		true  "Sort"
+// @Param        queryPagination   	query      	model.Pagination  	true  "Pagination"
+// @Param        queryStatus   		query      	model.Status  		true  "Status"
+// @Param        querySort   		query      	model.Sort  		true  "Sort"
 // @Success      200  				{object}  	[]model.Task
 // @Failure      400  				{object}  	response.Response
 // @Failure      404  				{object}  	response.Response
