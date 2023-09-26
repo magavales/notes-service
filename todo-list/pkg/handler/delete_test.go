@@ -1,122 +1,62 @@
 package handler
 
 import (
+	"bytes"
 	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"todo-list/pkg/database"
+	mock_database "todo-list/pkg/database/mocks"
+	"todo-list/pkg/model"
 )
 
-func TestDelete1(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	handler := new(Handler)
+func TestHandler_deleteTask1(t *testing.T) {
+	type mockBehaviour func(s *mock_database.MockAccess, id model.TaskID)
 
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
+	temp := new(model.TaskID)
+	temp.ID = 1
+
+	testTable := []struct {
+		name                string
+		inputID             model.TaskID
+		mockBehaviour       mockBehaviour
+		expectedStatusCode  int
+		expectedRequestBody string
+	}{
+		{
+			name:    "OK",
+			inputID: *temp,
+			mockBehaviour: func(s *mock_database.MockAccess, id model.TaskID) {
+				s.EXPECT().DeleteTask(id.ID).Return(nil)
+			},
+			expectedStatusCode: 200,
+		},
 	}
 
-	router := gin.Default()
-	router.DELETE("/api/v1/tasks/:id", handler.deleteTaskByID)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
 
-	req, err := http.NewRequest(http.MethodDelete, "/api/v1/tasks/1", nil)
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
+			newMockAccess := mock_database.NewMockAccess(c)
+			testCase.mockBehaviour(newMockAccess, testCase.inputID)
+
+			access := &database.Database{Access: newMockAccess}
+			handler := NewHandler(access)
+
+			router := gin.Default()
+			router.DELETE("/api/v1/tasks/:id", handler.deleteTaskByID)
+
+			req := httptest.NewRequest(http.MethodDelete, "/api/v1/tasks/1", bytes.NewBufferString(strconv.FormatInt(testCase.inputID.ID, 10)))
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+
+			assert.Equal(t, testCase.expectedStatusCode, resp.Code)
+		})
 	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, 200, resp.Code, "#1 Test for updating is completed!")
-}
-
-func TestDelete2(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	handler := new(Handler)
-
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
-	}
-
-	router := gin.Default()
-	router.DELETE("/api/v1/tasks/:id", handler.deleteTaskByID)
-
-	req, err := http.NewRequest(http.MethodDelete, "/api/v1/tasks/2", nil)
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, 200, resp.Code, "#2 Test for updating is completed!")
-}
-
-func TestDelete3(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	handler := new(Handler)
-
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
-	}
-
-	router := gin.Default()
-	router.DELETE("/api/v1/tasks/:id", handler.deleteTaskByID)
-
-	req, err := http.NewRequest(http.MethodDelete, "/api/v1/tasks/3", nil)
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, 200, resp.Code, "#1 Test for updating is completed!")
-}
-
-func TestDelete4(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	handler := new(Handler)
-
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
-	}
-
-	router := gin.Default()
-	router.DELETE("/api/v1/tasks/:id", handler.deleteTaskByID)
-
-	req, err := http.NewRequest(http.MethodDelete, "/api/v1/tasks/4", nil)
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, 200, resp.Code, "#4 Test for updating is completed!")
 }

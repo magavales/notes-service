@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"strconv"
-	"todo-list/pkg/database"
 	"todo-list/pkg/model"
 	"todo-list/pkg/response"
 )
@@ -24,7 +23,6 @@ import (
 // @Router       /api/v1/tasks/:id 	[put]
 func (h *Handler) updateTaskByID(ctx *gin.Context) {
 	var (
-		db          database.Database
 		id          model.TaskID
 		task        model.TaskReq
 		resp        response.Response
@@ -50,14 +48,7 @@ func (h *Handler) updateTaskByID(ctx *gin.Context) {
 	temp, _ := strconv.Atoi(ctx.Param("id"))
 	id.ID = int64(temp)
 
-	err = db.Connect(h.Config)
-	if err != nil {
-		log.Printf("Service can't connect to database: %s\n", err)
-		resp.SetStatusInternalServerError()
-		return
-	}
-
-	err = db.Access.UpdateTask(db.Pool, id.ID, task)
+	err = h.db.Access.UpdateTask(id.ID, task)
 	if err != nil {
 		if errors.As(err, &updateError) {
 			log.Printf("Task with id = %d isn't in database. Error: %s\n", id.ID, err)

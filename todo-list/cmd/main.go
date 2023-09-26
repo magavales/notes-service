@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"todo-list/pkg/database"
+	"todo-list/pkg/database/table"
 	"todo-list/pkg/handler"
 	"todo-list/pkg/server"
 )
@@ -18,11 +19,10 @@ import (
 @in header
 */
 func main() {
-	h := new(handler.Handler)
 	if err := initConfig(); err != nil {
 		log.Fatalf("error initializing configs: %s", err)
 	}
-	h.Config = database.Config{
+	config := database.Config{
 		User:     viper.GetString("db.user"),
 		Password: viper.GetString("db.password"),
 		Host:     viper.GetString("db.host"),
@@ -31,13 +31,22 @@ func main() {
 		Conns:    viper.GetString("db.conns"),
 	}
 	if len(os.Args) == 2 {
-		h.Config.Host = os.Args[1]
+		config.Host = os.Args[1]
 	}
+
+	pool, err := config.Connect()
+	if err != nil {
+		log.Fatalf("error connect to database: %s", err)
+	}
+
+	access := table.NewAccess(pool)
+	db := database.NewConn(access)
+	h := handler.NewHandler(db)
 
 	router := h.InitRouter()
 
 	serv := new(server.Server)
-	err := serv.InitServer(viper.GetString("server.port"), router)
+	err = serv.InitServer(viper.GetString("server.port"), router)
 	if err != nil {
 		log.Fatalf("Server can't be opened: %s", err)
 	}

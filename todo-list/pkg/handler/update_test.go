@@ -2,186 +2,72 @@ package handler
 
 import (
 	"bytes"
-	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 	"todo-list/pkg/database"
+	mock_database "todo-list/pkg/database/mocks"
 	"todo-list/pkg/model"
 )
 
-func TestUpdate1(t *testing.T) {
-	gin.SetMode(gin.TestMode)
+func TestHandler_updateTask1(t *testing.T) {
+	type mockBehaviour func(s *mock_database.MockAccess, id model.TaskID, task model.TaskReq)
+
+	temp := new(model.TaskID)
+	temp.ID = 1
 	customTime := new(model.CustomTime)
-	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-28 16:00:00")
-	handler := new(Handler)
+	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-27 16:00:00")
 
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
+	testTable := []struct {
+		name                string
+		inputID             model.TaskID
+		inputBody           string
+		inputTask           model.TaskReq
+		mockBehaviour       mockBehaviour
+		expectedStatusCode  int
+		expectedRequestBody string
+	}{
+		{
+			name:      "OK",
+			inputID:   *temp,
+			inputBody: `{"header": "Погулять в парке Коломенское", "description": "сегодня", "date": "2023-09-27 16:00:00", "status": "uncompleted"}`,
+			inputTask: model.TaskReq{
+				Header:      "Погулять в парке Коломенское",
+				Description: "сегодня",
+				Date:        *customTime,
+				Status:      "uncompleted",
+			},
+			mockBehaviour: func(s *mock_database.MockAccess, id model.TaskID, task model.TaskReq) {
+				s.EXPECT().UpdateTask(id.ID, task).Return(nil)
+			},
+			expectedStatusCode: 200,
+		},
 	}
 
-	reqData := model.Task{
-		Header:      "Погулять в парке Коломенское",
-		Description: "завтра",
-		Date:        *customTime,
-		Status:      "uncompleted",
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
+
+			update := mock_database.NewMockAccess(c)
+			testCase.mockBehaviour(update, testCase.inputID, testCase.inputTask)
+
+			access := &database.Database{Access: update}
+			handler := NewHandler(access)
+
+			router := gin.Default()
+			router.PUT("/api/v1/tasks/:id", handler.updateTaskByID)
+
+			req := httptest.NewRequest(http.MethodPut, "/api/v1/tasks/1", bytes.NewBufferString(testCase.inputBody))
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+
+			assert.Equal(t, testCase.expectedStatusCode, resp.Code)
+		})
 	}
-
-	jdata, err := json.Marshal(reqData)
-	if err != nil {
-		log.Printf("The service couldn't encode data to JSON file. Error: %s\n", err)
-		return
-	}
-
-	router := gin.Default()
-	router.PUT("/api/v1/tasks/:id", handler.updateTaskByID)
-
-	req, err := http.NewRequest(http.MethodPut, "/api/v1/tasks/1", bytes.NewReader(jdata))
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, 200, resp.Code, "#1 Test for updating is completed!")
-}
-
-func TestUpdate2(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	customTime := new(model.CustomTime)
-	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-23 10:32:56")
-	handler := new(Handler)
-
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
-	}
-
-	reqData := model.Task{
-		Header:      "Сделать домашнее задание",
-		Description: "математика, физика",
-		Date:        *customTime,
-		Status:      "completed",
-	}
-
-	jdata, err := json.Marshal(reqData)
-	if err != nil {
-		log.Printf("The service couldn't encode data to JSON file. Error: %s\n", err)
-		return
-	}
-
-	router := gin.Default()
-	router.PUT("/api/v1/tasks/:id", handler.updateTaskByID)
-
-	req, err := http.NewRequest(http.MethodPut, "/api/v1/tasks/2", bytes.NewReader(jdata))
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, 200, resp.Code, "#2 Test for updating is completed!")
-}
-
-func TestUpdate3(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	customTime := new(model.CustomTime)
-	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-27 21:43:14")
-	handler := new(Handler)
-
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
-	}
-
-	reqData := model.Task{
-		Header:      "Погладить кота",
-		Description: "сегодня",
-		Date:        *customTime,
-		Status:      "completed",
-	}
-
-	jdata, err := json.Marshal(reqData)
-	if err != nil {
-		log.Printf("The service couldn't encode data to JSON file. Error: %s\n", err)
-		return
-	}
-
-	router := gin.Default()
-	router.PUT("/api/v1/tasks/:id", handler.updateTaskByID)
-
-	req, err := http.NewRequest(http.MethodPut, "/api/v1/tasks/3", bytes.NewReader(jdata))
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, 200, resp.Code, "#1 Test for updating is completed!")
-}
-
-func TestUpdate4(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	customTime := new(model.CustomTime)
-	customTime.Time, _ = time.Parse("2006-01-02 15:04:05", "2023-09-26 22:38:20")
-	handler := new(Handler)
-
-	handler.Config = database.Config{
-		User:     "postgres",
-		Password: "1703",
-		Host:     "localhost",
-		Port:     "5432",
-		Name:     "postgres",
-		Conns:    "10",
-	}
-
-	reqData := model.Task{
-		Header:      "Купить чипсы",
-		Description: "завтра",
-		Date:        *customTime,
-		Status:      "uncompleted",
-	}
-
-	jdata, err := json.Marshal(reqData)
-	if err != nil {
-		log.Printf("The service couldn't encode data to JSON file. Error: %s\n", err)
-		return
-	}
-
-	router := gin.Default()
-	router.PUT("/api/v1/tasks/:id", handler.updateTaskByID)
-
-	req, err := http.NewRequest(http.MethodPut, "/api/v1/tasks/4", bytes.NewReader(jdata))
-	if err != nil {
-		t.Fatalf("Couldn't create request: %v\n", err)
-	}
-
-	resp := httptest.NewRecorder()
-
-	router.ServeHTTP(resp, req)
-
-	assert.Equal(t, 200, resp.Code, "#4 Test for updating is completed!")
 }

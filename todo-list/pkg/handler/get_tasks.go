@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"log"
-	"todo-list/pkg/database"
 	"todo-list/pkg/model"
 	"todo-list/pkg/response"
 )
@@ -25,7 +24,6 @@ import (
 // @Router       /api/v1/tasks 		[get]
 func (h *Handler) getTasks(ctx *gin.Context) {
 	var (
-		db              database.Database
 		tasks           []model.Task
 		resp            response.Response
 		queryStatus     model.Status
@@ -35,16 +33,10 @@ func (h *Handler) getTasks(ctx *gin.Context) {
 	)
 	resp.RespWriter = ctx.Writer
 
-	err = db.Connect(h.Config)
-	if err != nil {
-		log.Printf("Service can't connect to database: %s\n", err)
-		resp.SetStatusInternalServerError()
-		return
-	}
 	queryPagination.ParseQueryParams(ctx.Request.URL)
 	err = queryStatus.ParseQueryParams(ctx.Request.URL)
 	if err != nil {
-		tasks, err = db.Access.GetTasks(db.Pool, queryPagination.Limit, queryPagination.Offset)
+		tasks, err = h.db.Access.GetTasks(queryPagination.Limit, queryPagination.Offset)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				log.Printf("Tasks aren't in database. Error: %s\n", err)
@@ -69,7 +61,7 @@ func (h *Handler) getTasks(ctx *gin.Context) {
 	}
 	err = querySort.ParseQueryParams(ctx.Request.URL)
 	if err != nil {
-		tasks, err = db.Access.GetTasksWithStatus(db.Pool, queryStatus.Status, queryPagination.Limit, queryPagination.Offset)
+		tasks, err = h.db.Access.GetTasksWithStatus(queryStatus.Status, queryPagination.Limit, queryPagination.Offset)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				log.Printf("Tasks aren't in database. Error: %s\n", err)
@@ -92,7 +84,7 @@ func (h *Handler) getTasks(ctx *gin.Context) {
 		resp.SetData(jdata)
 		return
 	} else {
-		tasks, err = db.Access.GetTasksOrderBy(db.Pool, queryStatus.Status, querySort.Sort, queryPagination.Limit, queryPagination.Offset)
+		tasks, err = h.db.Access.GetTasksOrderBy(queryStatus.Status, querySort.Sort, queryPagination.Limit, queryPagination.Offset)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				log.Printf("Tasks aren't in database. Error: %s\n", err)
