@@ -11,9 +11,9 @@ import (
 	"todo-list/pkg/response"
 )
 
-// @Summary      Update task
-// @Description  update task
-// @Tags         update
+// @Summary      Get tasks
+// @Description  get tasks
+// @Tags         get
 // @Accept       json
 // @Param        queryPagination   	query      	model.Pagination  	true  "Pagination"
 // @Param        queryStatus   		query      	model.Status  		true  "Status"

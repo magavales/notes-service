@@ -17,14 +17,14 @@ const docTemplate = `{
     "paths": {
         "/api/v1/tasks": {
             "get": {
-                "description": "update task",
+                "description": "get tasks",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
-                    "update"
+                    "get"
                 ],
-                "summary": "Update task",
+                "summary": "Get tasks",
                 "parameters": [
                     {
                         "type": "integer",
@@ -143,6 +143,15 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "new task",
+                        "name": "task",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/todo-list_pkg_model.TaskReq"
+                        }
                     }
                 ],
                 "responses": {
@@ -191,7 +200,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/todo-list_pkg_model.Task"
+                            "$ref": "#/definitions/todo-list_pkg_model.TaskReq"
                         }
                     }
                 ],
@@ -303,6 +312,23 @@ const docTemplate = `{
             "properties": {
                 "task_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "todo-list_pkg_model.TaskReq": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "$ref": "#/definitions/todo-list_pkg_model.CustomTime"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "header": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },

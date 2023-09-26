@@ -16,7 +16,7 @@ import (
 // @Tags         create
 // @Accept       json
 // @Produce      json
-// @Param        task   body      	model.Task  true  "Data for creating task"
+// @Param        task   body      	model.TaskReq  true  "Data for creating task"
 // @Success      200  {object}  	model.TaskID
 // @Failure      400  {object}  	response.Response
 // @Failure      404  {object}  	response.Response
@@ -25,7 +25,8 @@ import (
 func (h *Handler) createTask(ctx *gin.Context) {
 	var (
 		db          database.Database
-		task        model.Task
+		task        model.TaskReq
+		id          model.TaskID
 		resp        response.Response
 		err         error
 		syntaxError *json.SyntaxError
@@ -52,14 +53,14 @@ func (h *Handler) createTask(ctx *gin.Context) {
 		return
 	}
 
-	err = db.Access.CreateTask(db.Pool, &task)
+	id.ID, err = db.Access.CreateTask(db.Pool, &task)
 	if err != nil {
 		log.Printf("The service couldn't create task in database. Error: %s\n", err)
 		resp.SetStatusInternalServerError()
 		return
 	} else {
 		respID := new(model.TaskID)
-		respID.ID = task.ID
+		respID.ID = id.ID
 		jdata, err := json.Marshal(respID)
 		if err != nil {
 			log.Printf("The service couldn't encode data to JSON file. Error: %s\n", err)

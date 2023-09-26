@@ -23,6 +23,17 @@ definitions:
       task_id:
         type: integer
     type: object
+  todo-list_pkg_model.TaskReq:
+    properties:
+      date:
+        $ref: '#/definitions/todo-list_pkg_model.CustomTime'
+      description:
+        type: string
+      header:
+        type: string
+      status:
+        type: string
+    type: object
   todo-list_pkg_response.Response:
     properties:
       respWriter: {}
@@ -38,7 +49,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: update task
+      description: get tasks
       parameters:
       - in: query
         name: limit
@@ -71,9 +82,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/todo-list_pkg_response.Response'
-      summary: Update task
+      summary: Get tasks
       tags:
-      - update
+      - get
   /api/v1/tasks/:id:
     delete:
       consumes:
@@ -147,7 +158,7 @@ paths:
         name: task
         required: true
         schema:
-          $ref: '#/definitions/todo-list_pkg_model.Task'
+          $ref: '#/definitions/todo-list_pkg_model.TaskReq'
       produces:
       - application/json
       responses:
@@ -180,6 +191,12 @@ paths:
         name: id
         required: true
         type: integer
+      - description: new task
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/todo-list_pkg_model.TaskReq'
       responses:
         "200":
           description: OK

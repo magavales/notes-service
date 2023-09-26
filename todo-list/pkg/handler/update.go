@@ -15,7 +15,8 @@ import (
 // @Description  update task
 // @Tags         update
 // @Accept       json
-// @Param        id   path      	int  true  "Task ID"
+// @Param        id   	path      	int  true  "Task ID"
+// @Param        task   body      	model.TaskReq  true  "new task"
 // @Success      200  {object}  	response.Response
 // @Failure      400  {object}  	response.Response
 // @Failure      404  {object}  	response.Response
@@ -25,7 +26,7 @@ func (h *Handler) updateTaskByID(ctx *gin.Context) {
 	var (
 		db          database.Database
 		id          model.TaskID
-		task        model.Task
+		task        model.TaskReq
 		resp        response.Response
 		err         error
 		syntaxError *json.SyntaxError
@@ -56,14 +57,14 @@ func (h *Handler) updateTaskByID(ctx *gin.Context) {
 		return
 	}
 
-	err = db.Access.UpdateTask(db.Pool, task)
+	err = db.Access.UpdateTask(db.Pool, id.ID, task)
 	if err != nil {
 		if errors.As(err, &updateError) {
-			log.Printf("Task with id = %d isn't in database. Error: %s\n", task.ID, err)
+			log.Printf("Task with id = %d isn't in database. Error: %s\n", id.ID, err)
 			resp.SetStatusNotFound()
 			return
 		} else {
-			log.Printf("The service couldn't update data of task from database with id = %d. Error: %s\n", task.ID, err)
+			log.Printf("The service couldn't update data of task from database with id = %d. Error: %s\n", id.ID, err)
 			resp.SetStatusInternalServerError()
 			return
 		}

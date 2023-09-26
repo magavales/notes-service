@@ -12,25 +12,26 @@ import (
 type DataAccess struct {
 }
 
-func (da DataAccess) CreateTask(pool *pgxpool.Pool, task *model.Task) error {
+func (da DataAccess) CreateTask(pool *pgxpool.Pool, task *model.TaskReq) (int64, error) {
+	var id int64
 	rows, err := pool.Query(context.Background(), "INSERT INTO tasks (header, description, date, status) VALUES ($1, $2, $3, $4) RETURNING id", task.Header, task.Description, task.Date.Time, task.Status)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if rows.Next() {
 		values, err := rows.Values()
 		if err != nil {
 			log.Printf("error while iterating dataset. Error: %s\n", err)
-			return err
+			return 0, err
 		}
-		task.ID = values[0].(int64)
+		id = values[0].(int64)
 	} else {
-		return pgx.ErrNoRows
+		return 0, pgx.ErrNoRows
 	}
 
 	log.Printf("Task has been created!")
 
-	return err
+	return id, err
 }
 
 func (da DataAccess) GetTasks(pool *pgxpool.Pool, limit, offset int) (tasks []model.Task, err error) {
@@ -119,8 +120,8 @@ func (da DataAccess) GetTaskByID(pool *pgxpool.Pool, id int64) (task model.Task,
 	return task, err
 }
 
-func (da DataAccess) UpdateTask(pool *pgxpool.Pool, task model.Task) error {
-	tag, err := pool.Exec(context.Background(), "UPDATE tasks SET header = $2, description = $3, date = $4, status = $5 WHERE id = $1", task.ID, task.Header, task.Description, task.Date.Time, task.Status)
+func (da DataAccess) UpdateTask(pool *pgxpool.Pool, id int64, task model.TaskReq) error {
+	tag, err := pool.Exec(context.Background(), "UPDATE tasks SET header = $2, description = $3, date = $4, status = $5 WHERE id = $1", id, task.Header, task.Description, task.Date.Time, task.Status)
 	if err != nil {
 		return err
 	}
