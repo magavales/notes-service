@@ -12,17 +12,29 @@ import (
 	"todo-list/pkg/response"
 )
 
+// @Summary      Get task
+// @Description  get task
+// @Tags         get
+// @Accept       json
+// @Produce		 json
+// @Param        id   path      	int  true  "Task ID"
+// @Success      200  {object}  	model.Task
+// @Failure      400  {object}  	response.Response
+// @Failure      404  {object}  	response.Response
+// @Failure      500  {object}  	response.Response
+// @Router       /api/v1/tasks/:id 	[get]
 func (h *Handler) getTaskByID(ctx *gin.Context) {
 	var (
 		db   database.Database
 		task model.Task
+		id   model.TaskID
 		resp response.Response
 		err  error
 	)
 	resp.RespWriter = ctx.Writer
 
-	id, _ := strconv.Atoi(ctx.Param("id"))
-	task.ID = int64(id)
+	temp, _ := strconv.Atoi(ctx.Param("id"))
+	id.ID = int64(temp)
 
 	err = db.Connect(h.Config)
 	if err != nil {
@@ -31,7 +43,7 @@ func (h *Handler) getTaskByID(ctx *gin.Context) {
 		return
 	}
 
-	task, err = db.Access.GetTaskByID(db.Pool, task.ID)
+	task, err = db.Access.GetTaskByID(db.Pool, id.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			log.Printf("Task with id = %d isn't in database. Error: %s\n", id, err)

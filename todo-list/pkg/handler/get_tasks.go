@@ -11,6 +11,18 @@ import (
 	"todo-list/pkg/response"
 )
 
+// @Summary      Update task
+// @Description  update task
+// @Tags         update
+// @Accept       json
+// @Param        queryPagination   	path      	model.Pagination  	true  "Pagination"
+// @Param        queryStatus   		path      	model.Status  		true  "Status"
+// @Param        querySort   		path      	model.Sort  		true  "Sort"
+// @Success      200  				{object}  	[]model.Task
+// @Failure      400  				{object}  	response.Response
+// @Failure      404  				{object}  	response.Response
+// @Failure      500  				{object}  	response.Response
+// @Router       /api/v1/tasks 		[get]
 func (h *Handler) getTasks(ctx *gin.Context) {
 	var (
 		db              database.Database

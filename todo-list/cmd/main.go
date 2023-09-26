@@ -8,6 +8,14 @@ import (
 	"todo-list/pkg/server"
 )
 
+/*
+@title Todo List API
+@version v1.0.0
+@description API server for TodoList Application
+@host localhost:8080
+@BasePath /
+@in header
+*/
 func main() {
 	h := new(handler.Handler)
 	if err := initConfig(); err != nil {

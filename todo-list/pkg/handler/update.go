@@ -11,9 +11,20 @@ import (
 	"todo-list/pkg/response"
 )
 
+// @Summary      Update task
+// @Description  update task
+// @Tags         update
+// @Accept       json
+// @Param        id   path      	int  true  "Task ID"
+// @Success      200  {object}  	response.Response
+// @Failure      400  {object}  	response.Response
+// @Failure      404  {object}  	response.Response
+// @Failure      500  {object}  	response.Response
+// @Router       /api/v1/tasks/:id 	[put]
 func (h *Handler) updateTaskByID(ctx *gin.Context) {
 	var (
 		db          database.Database
+		id          model.TaskID
 		task        model.Task
 		resp        response.Response
 		err         error
@@ -35,8 +46,8 @@ func (h *Handler) updateTaskByID(ctx *gin.Context) {
 		}
 	}
 
-	id, _ := strconv.Atoi(ctx.Param("id"))
-	task.ID = int64(id)
+	temp, _ := strconv.Atoi(ctx.Param("id"))
+	id.ID = int64(temp)
 
 	err = db.Connect(h.Config)
 	if err != nil {

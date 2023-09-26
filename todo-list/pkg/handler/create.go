@@ -10,6 +10,18 @@ import (
 	"todo-list/pkg/response"
 )
 
+// CreateTask godoc
+// @Summary      Create task
+// @Description  create task
+// @Tags         create
+// @Accept       json
+// @Produce      json
+// @Param        task   body      	model.Task  true  "Data for creating task"
+// @Success      200  {object}  	model.TaskID
+// @Failure      400  {object}  	response.Response
+// @Failure      404  {object}  	response.Response
+// @Failure      500  {object}  	response.Response
+// @Router       /api/v1/tasks/:id 	[post]
 func (h *Handler) createTask(ctx *gin.Context) {
 	var (
 		db          database.Database
@@ -46,7 +58,7 @@ func (h *Handler) createTask(ctx *gin.Context) {
 		resp.SetStatusInternalServerError()
 		return
 	} else {
-		respID := new(model.IDofCreatedTask)
+		respID := new(model.TaskID)
 		respID.ID = task.ID
 		jdata, err := json.Marshal(respID)
 		if err != nil {
