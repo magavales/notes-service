@@ -1,4 +1,4 @@
-# sber-contest
+# notes-service
 
 ## Сборка и запуск
 
